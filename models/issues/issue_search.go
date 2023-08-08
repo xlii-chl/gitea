@@ -13,6 +13,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/container"
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
@@ -129,7 +130,10 @@ func applyLabelsCondition(sess *xorm.Session, opts *IssuesOptions) *xorm.Session
 		if opts.LabelIDs[0] == 0 {
 			sess.Where("issue.id NOT IN (SELECT issue_id FROM issue_label)")
 		} else {
-			for i, labelID := range opts.LabelIDs {
+			// We deduplicate the ID to reduce the load the database
+			// (possible DoS here by multiplying the joins)
+			uniqueLabelIDs := container.SetOf(opts.LabelIDs...).Values()
+			for i, labelID := range uniqueLabelIDs {
 				if labelID > 0 {
 					sess.Join("INNER", fmt.Sprintf("issue_label il%d", i),
 						fmt.Sprintf("issue.id = il%[1]d.issue_id AND il%[1]d.label_id = %[2]d", i, labelID))
