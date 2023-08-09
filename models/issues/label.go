@@ -7,10 +7,12 @@ package issues
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/modules/container"
 	"code.gitea.io/gitea/modules/label"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
@@ -124,7 +126,7 @@ func (l *Label) CalOpenOrgIssues(ctx context.Context, repoID, labelID int64) {
 
 // LoadSelectedLabelsAfterClick calculates the set of selected labels when a label is clicked
 func (l *Label) LoadSelectedLabelsAfterClick(currentSelectedLabels []int64, currentSelectedExclusiveScopes []string) {
-	var labelQuerySlice []string
+	labelQueryContainer := make(container.Set[string])  // container instead of slice to avoid duplicates
 	labelSelected := false
 	labelID := strconv.FormatInt(l.ID, 10)
 	labelScope := l.ExclusiveScope()
@@ -137,15 +139,19 @@ func (l *Label) LoadSelectedLabelsAfterClick(currentSelectedLabels []int64, curr
 		} else if s != 0 {
 			// Exclude other labels in the same scope from selection
 			if s < 0 || labelScope == "" || labelScope != currentSelectedExclusiveScopes[i] {
-				labelQuerySlice = append(labelQuerySlice, strconv.FormatInt(s, 10))
+				labelQueryContainer.Add(strconv.FormatInt(s, 10))
 			}
 		}
 	}
 	if !labelSelected {
-		labelQuerySlice = append(labelQuerySlice, labelID)
+		labelQueryContainer.Add(labelID)
 	}
 	l.IsSelected = labelSelected
-	l.QueryString = strings.Join(labelQuerySlice, ",")
+	// sort the ids to avoid the crawlers hitting the same
+	// page with a different order of parameters
+	sortedLabelQuerySlice := labelQueryContainer.Values()
+	sort.Strings(sortedLabelQuerySlice)
+	l.QueryString = strings.Join(sortedLabelQuerySlice, ",")
 }
 
 // BelongsToOrg returns true if label is an organization label
