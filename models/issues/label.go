@@ -126,9 +126,8 @@ func (l *Label) CalOpenOrgIssues(ctx context.Context, repoID, labelID int64) {
 
 // LoadSelectedLabelsAfterClick calculates the set of selected labels when a label is clicked
 func (l *Label) LoadSelectedLabelsAfterClick(currentSelectedLabels []int64, currentSelectedExclusiveScopes []string) {
-	labelQueryContainer := make(container.Set[string])  // container instead of slice to avoid duplicates
+	labelQuerySlice := []int64{}
 	labelSelected := false
-	labelID := strconv.FormatInt(l.ID, 10)
 	labelScope := l.ExclusiveScope()
 	for i, s := range currentSelectedLabels {
 		if s == l.ID {
@@ -139,19 +138,27 @@ func (l *Label) LoadSelectedLabelsAfterClick(currentSelectedLabels []int64, curr
 		} else if s != 0 {
 			// Exclude other labels in the same scope from selection
 			if s < 0 || labelScope == "" || labelScope != currentSelectedExclusiveScopes[i] {
-				labelQueryContainer.Add(strconv.FormatInt(s, 10))
+				labelQuerySlice = append(labelQuerySlice, s)
 			}
 		}
 	}
+
 	if !labelSelected {
-		labelQueryContainer.Add(labelID)
+		labelQuerySlice = append(labelQuerySlice, l.ID)
 	}
 	l.IsSelected = labelSelected
+
 	// sort the ids to avoid the crawlers hitting the same
 	// page with a different order of parameters
-	sortedLabelQuerySlice := labelQueryContainer.Values()
-	sort.Strings(sortedLabelQuerySlice)
-	l.QueryString = strings.Join(sortedLabelQuerySlice, ",")
+	// (still no sort.Ints64 in Go 1.20... Maybe Slice.sort in Go 1.21 ?)
+	sort.Slice(labelQuerySlice, func (i, j int) bool { return labelQuerySlice[i] < labelQuerySlice[j] })
+	// Deduplicate using a container
+	// (maybe again, with Go 1.21 and Slice.compact() ?)
+	labelQueryContainer := make(container.Set[string])
+	for _, s := range labelQuerySlice {
+		labelQueryContainer.Add(strconv.FormatInt(s, 10))
+	}
+	l.QueryString = strings.Join(labelQueryContainer.Values(), ",")
 }
 
 // BelongsToOrg returns true if label is an organization label
