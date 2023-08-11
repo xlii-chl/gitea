@@ -151,7 +151,7 @@ func (l *Label) LoadSelectedLabelsAfterClick(currentSelectedLabels []int64, curr
 	// sort the ids to avoid the crawlers hitting the same
 	// page with a different order of parameters
 	// (still no sort.Ints64 in Go 1.20... Maybe Slice.sort in Go 1.21 ?)
-	sort.Slice(labelQuerySlice, func (i, j int) bool { return labelQuerySlice[i] < labelQuerySlice[j] })
+	sort.Slice(labelQuerySlice, func(i, j int) bool { return labelQuerySlice[i] < labelQuerySlice[j] })
 	// Deduplicate using a container
 	// (maybe again, with Go 1.21 and Slice.compact() ?)
 	labelQueryContainer := make(container.Set[string])

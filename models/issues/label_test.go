@@ -36,7 +36,7 @@ func TestLabel_LoadSelectedLabelsAfterClick(t *testing.T) {
 	label.LoadSelectedLabelsAfterClick([]int64{1, 7, 1, 7, 7}, []string{"", "scope", "", "scope", "scope"})
 	// As of now, LoadSelectedLabelsAfterClick() use a map to deduplicate, which
 	// doesn't garanty the order
-	assert.Equal(t, true, "1,8" == label.QueryString || "8,1" == label.QueryString, "unexpected value '%s' (expected '1,8' or '8,1')", label.QueryString)
+	assert.Equal(t, true, label.QueryString == "1,8" || label.QueryString == "8,1", "unexpected value '%s' (expected '1,8' or '8,1')", label.QueryString)
 	assert.Equal(t, false, label.IsSelected)
 
 	// Third test : empty set
