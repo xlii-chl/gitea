@@ -143,7 +143,7 @@ func applyLabelsCondition(sess *xorm.Session, opts *IssuesOptions) *xorm.Session
 			}
 			// ... and use them in a subquery of the form :
 			//  where (select count(*) from issue_label where issue_id=issue.id and label_id in (2, 4, 6)) = 3
-			// This equality is garanteed thanks to unique index (issue_id,label_id) on table issue_label.
+			// This equality is guaranteed thanks to unique index (issue_id,label_id) on table issue_label.
 			if len(IncludedLabelIDs) > 0 {
 				subquery := builder.Select("count(*)").From("issue_label").Where(builder.Expr("issue_id = issue.id")).
 					And(builder.In("label_id", IncludedLabelIDs.Values()))

@@ -24,7 +24,7 @@ func TestLabel_CalOpenIssues(t *testing.T) {
 
 func TestLabel_LoadSelectedLabelsAfterClick(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
-	// Loading the label id:8 wich have a scope and an exclusivity
+	// Loading the label id:8 which have a scope and an exclusivity
 	label := unittest.AssertExistsAndLoadBean(t, &issues_model.Label{ID: 8})
 
 	// First test : with negative and scope
